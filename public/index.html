@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <title>Trelfaux</title>
+        <link href="https://fonts.googleapis.com/css?family=Sedgwick+Ave" rel="stylesheet">
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body id="bod">
+        <nav>
+            <div class="nav-item">
+                <a href="#" class="nav-link nav-link-square"><i class="fas fa-home"></i></a>
+                <a href="#" class="nav-link nav-link-square"><i class="fas fa-trophy"></i></a>
+                <a href="#" class="nav-link nav-link-square"><i class="fas fa-search"></i></a>
+            </div>
+            <div class="nav-item heading"><!--(fixed)-->
+                <h1>
+                    <a href="#"><i class="fas fa-trophy"></i> Trelfaux</a>
+                </h1>
+            </div>
+            <div class="nav-item-last">
+                <a href="#" class="nav-link nav-link-square"><i class="fas fa-plus"></i></a>
+                <a href="#" class="nav-link nav-link-square"><i class="fas fa-info-circle"></i></a>
+                <a href="#" class="nav-link nav-link-square"><i class="far fa-bell"></i></a>
+                <a href="#" class="nav-link nav-link-circle"><span>ZG</span></a>
+            </div>
+        </nav>
+        <div id="subnav">
+            <span id="subnav-my-board" contenteditable="true">My Board</span>
+            <a href="#" id="subnav-star"><i class="far fa-star"></i></a>
+            <span class="subnav-lil-line"></span>
+            <a href="#" id="subnav-personal">Personal</a>
+            <span class="subnav-lil-line"></span>
+            <a href="#" id="subnav-private"><i class="fas fa-lock"></i> &nbsp Private</a>
+            <span class="subnav-lil-line"></span>
+            <a href="#" id="subnav-circle">ZG</a>
+            <a href="#" id="subnav-invite">Invite</a>
+            <a href="#" id="show-menu" onclick="sideMenu();"><i class="fas fa-ellipsis-h"></i> &nbsp<u>Show Menu</u></a>
+        </div>
+        <div id="list-group"> <!--could try and put onclick here to replacePlaceholder-->
+            <div id="new-lists">
+
+            </div>
+            <button type="button" class="swim-lane-placeholder" onclick="disappear(this)"><i class="fas fa-plus"></i> &nbspAdd a list</button>
+            <div class="swim-lane-namer">
+                <input class="list-title" id="list-title" type="text" placeholder="Enter list title..." onkeypress="enterDirect(event)" autofocus>
+                <input class="add-list" type="button" onclick="addList()" value="Add List">
+                <a href="#" onclick="replacePlaceholder()"><i class="fas fa-times"></i></a>
+            </div>
+            <div style="display: inline-block; width: 8px; visibility: hidden;">z</div><!--vulgar solution-->
+        </div>
+        <div id="list-dropdown">
+            <div id="list-proxy"></div>
+            <div id="list-dropdown-top">
+                <a id="list-d-back" href="#" onclick="resetListDropdown()"><i class="fas fa-arrow-left"></i></a>
+                <span id="list-d-text">List Actions</span>
+                <a id="list-d-x" href="#" onclick="goAwayDroppy()"><i class="fas fa-times"></i></a>
+            </div>
+            <div id="list-dropdown-bottom">
+                <a id="list-d-move" href="#" onclick="moveListMenu()">Move List...</a>
+                <a id="list-d-move" href="#" onclick="moveCardsMenu()">Move All Cards in This List...</a>
+                <a id="list-d-delete" href="#" onclick="deleteListMenu()">Delete List...</a>
+            </div>
+            <div id="list-dropdown-bottom2">
+
+            </div>
+            <div id="list-dropdown-bottom3">
+
+            </div>
+            <form id="list-dropdown-bottom4">
+
+            </form>
+        </div>
+        <div id="side-menu">
+            <div id="side-menu-top">
+                <a id="side-m-back" href="#" onclick="resetListDropdown()"><i class="fas fa-arrow-left"></i></a>
+                <span id="side-m-text">Menu</span>
+                <a id="side-m-x" href="#" onclick="hideMenu()"><i class="fas fa-times"></i></a>
+            </div>
+            <form id="menu-form" onsubmit="return changeBgColor();"><div id="guy"><span id="menu-color-text">Select background color:</span><input type='color' id="color" value="#6e856e"/></div><button type="submit" class="green-butt">Change Background Color!</button></form>
+        </div>
+        <button id="delete-guy" type="button">Delete Card</button>
+        <div id="clickout-guy"></div>
+        <div id="is-edited-proxy">false</div>
+        <script src="script.js"></script>
+    </body>
+</html>
+
+<!-- problem on first attempt to move list-->
