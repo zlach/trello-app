@@ -66,7 +66,7 @@ function createEmptyList(list_name, guid){
     var new_list_span = document.createElement('span');
     new_list_span.setAttribute('id', 'list-span' + list_number);
     new_list_span.setAttribute('class', 'list-span');
-    new_list_span.setAttribute('contenteditable', 'true');
+    // new_list_span.setAttribute('contenteditable', 'true');
     // // button to add functionality later//
     var new_list_button = document.createElement('button');
     new_list_button.setAttribute('id', 'list-button' + list_number);
@@ -117,10 +117,10 @@ function createEmptyList(list_name, guid){
         list_array.push(new_list);
     } else {
         let pre_guid = new Guid();
-        let newguid = pre_guid.guid;
-        new_list.setAttribute('data-guid', newguid);
+        guid = pre_guid.guid;
+        new_list.setAttribute('data-guid', guid);
         list_array.push(new_list);
-        $.post('/lists', {"text": `${list_name}`, "destination": `${list_number}`, "guid":`${newguid}`}, null)
+        $.post('/lists', {"text": `${list_name}`, "guid":`${guid}`}, null)
     }
     list_number += 1;
 }
@@ -176,15 +176,16 @@ function cardBlur(card, namer, id) {
         cardiB.nextElementSibling.style.display = "block";
 
         named.value = cardiB.firstChild.innerHTML;
-    } else if (edit_card.innerHTML == 'true'){
+    } else if (edit_card.innerHTML == 'true' && delete_proxy == false){
         var clickout = document.getElementById('clickout-guy');
         clickout.style.display = 'none';
         editCardFinal(card, namer, id);
-    } else {
+    } else if (delete_proxy == false){
         var clickout = document.getElementById('clickout-guy');
         clickout.style.display = 'none';
         addCard(card, namer, id);
     }
+    delete_proxy = false//very confusing hack
     var edit_card = document.getElementById('is-edited-proxy');
     edit_card.innerHTML = 'false';
     deleteGuyByeBye();
@@ -248,6 +249,17 @@ function editCardFinal(card, namer, id) {
     card.style.display = 'flex';
     var card_insert = card.nextElementSibling;
     card_insert.style.display = "block";
+    var parent = card.parentElement;
+    var children = card.parentElement.parentElement.getElementsByClassName('card-container');
+    var guid = document.getElementById(id).parentElement.dataset.guid;
+    for (let i = 0; i < children.length;i++){
+        if (children[i] == parent){
+            console.log('shouldnt be here', i, guid, namer.value);
+            $.post('/cards/edit', {"index": `${i}`, "list": `${guid}`, "text": `${namer.value}`}, null)
+        }
+    }
+
+    // $.post('/cards/edit', {"newName": `${namer.value}`}, null);
 }
 
 function addCard(card, namer, id){
@@ -277,9 +289,13 @@ function addCard(card, namer, id){
     // var index = namer[namer.length - 1];
     // var container_id = "card-container" + index;
     // var container = document.getElementById(container_id);
-    
+    var preGuid = new Guid();
+    var newGuid = preGuid.guid;
+    card.parentElement.setAttribute('data-guid', newGuid);
+    // card.setAttribute('data-guid', newGuid);
+    $.post('/cards', {"text": `${name}`, "destination": `${list_destination.parentElement.dataset.guid}`, "guid":`${newGuid}`}, null)
     card_array.push(card);
-    // console.log(card_array);
+
 }
 
 function editCard(card, namer){
@@ -308,6 +324,8 @@ function editCard(card, namer){
     deleteGuy(namer);
 }
 
+let delete_proxy = false;
+
 function deleteGuy(namer){
     var name = document.getElementById(namer);
     var scrolled = name.parentElement.parentElement;
@@ -321,33 +339,40 @@ function deleteGuy(namer){
     delete_guy.style.left = (name.offsetLeft - scroll_left) + 251 + 'px';
     delete_guy.style.top = (name.offsetTop - scroll_top) + 'px';
     delete_guy.addEventListener('mousedown', function(){deleteCard(namer);}, false);
-    // console.dir(delete_guy.getAttribute('onclick'));
+
 
     // delete_guy.addEventListener('click', (event) => {
     //     // delete this element card
 
     //     // remove this event listener
 
-    //     console.log('start')
+
 
     //     delete_guy.removeEventListener('click')
 
-    //     console.log('end')
     // })
     if ((name.offsetLeft - scroll_left) + 348 > window.innerWidth) {
-        console.log('in?');
+
         delete_guy.style.left = (name.offsetLeft - scroll_left) - 98 + 'px';
     }//sketchy
 }
 
 function deleteCard(namer){
     // var namer = document.getElementById(namer);
-    console.log(namer);
+    delete_proxy = true;
     var index = namer.substr(10);
-    console.log(index);
+
     var bye_guy_id = 'card-container' + index;
     var bye_guy = document.getElementById(bye_guy_id);
-    bye_guy.style.display = 'none';
+    var list = bye_guy.parentElement.parentElement.dataset.guid;
+    var children = bye_guy.parentElement.getElementsByClassName('card-container');
+    for (let i = 0; i < children.length;i++){
+        if (children[i] == bye_guy){
+            console.log(i);
+            $.post('/cards/delete', {"index": `${i}`, "list": `${list}`}, null);
+        }
+    }
+    bye_guy.parentNode.removeChild(bye_guy);
     var target = 'new-card' + index;
     for (let i = 0;i < card_array.length;i++){
         if (card_array[i].id == target){
@@ -431,13 +456,14 @@ function moveCards() {
     let cards_to_move = [];
     var current_list_number = document.getElementById('list-proxy').textContent;
     var current_list = list_array[current_list_number - 1];
+    var from = current_list.dataset.guid;
     var selected = document.getElementById('list-dropdown-bottom4').children[0].children[1].options[document.getElementById('list-dropdown-bottom4').children[0].children[1].selectedIndex].value;
     var target_id = list_array[selected - 1].id;
     var target_index = target_id.substr(4);
     var target = document.getElementById('new-cards' + target_index);
-
+    var to = target.parentElement.dataset.guid;
     var cards = current_list.children[1].children;
-    console.log(cards);
+    $.post('/cards/moveall', {"from":`${from}`,"to": `${to}`}, null)
     if (selected[selected.length - 1] == ')'){
         return false;
     } else {
@@ -446,12 +472,13 @@ function moveCards() {
                 cards_to_move.push(card);
             }
         }
-        console.log(cards_to_move);
+
         for (let i = 0; i < cards_to_move.length;i++){
             target.append(cards_to_move[i]);
         }
     }
     target.style.padding = '0px 8px';
+    console.log(cards_to_move);
     goAwayDroppy();
     reprintLists();
 
@@ -661,13 +688,14 @@ document.body.addEventListener("mousedown", (evt) => {
 // const fill = document.querySelector('.new-card');
 // const empties = document.querySelectorAll('');
 
-// console.log(fill)
+
 // (x)
 
 function deleteGuyByeBye(){
     const delete_guy = document.getElementById('delete-guy');
     delete_guy.style.display = "none";
 }
+let from_guid = '';
 
 function dragStart() {
     setTimeout(() => {
@@ -687,6 +715,7 @@ function dragStart() {
 
 
     }, 0);
+    from_guid = this.parentElement.parentElement.parentElement.dataset.guid;
     var inserts = document.getElementsByClassName('insert');
     for(const insert of inserts){
         insert.addEventListener('dragover', dragOver);
@@ -737,6 +766,20 @@ function dragEnd() {
     this.style.height = "initial";
     // var hide = this.previousElementSibling.previousElementSibling;
     // hide.style.display = 'block';
+    let cards =  this.parentElement.parentElement.getElementsByClassName('card-container');
+    let index = 0;
+    for (let i = 0; i < cards.length;i++){
+        if (cards[i] == this.parentElement){
+            index = i;
+        }
+    }
+    var p_guid = this.parentElement.dataset.guid;
+    console.log(p_guid);
+    console.log(this.parentElement.parentElement.parentElement);
+    var gp_guid = this.parentElement.parentElement.parentElement.dataset.guid;
+    console.log(gp_guid);
+    $.post('/cards/move', {"index": `${index}`, "card": `${p_guid}`, "listFrom": `${from_guid}`, "listTo": `${gp_guid}`}, null)
+
 }
 
 function dragOver(e){
@@ -868,11 +911,15 @@ function dragLeaveBottom(){
 
 $(document).ready(function(){
     let lists = [];
+    let which_list = 1;
     $.get('/lists', function(res){
         lists = res;
         for (let item of lists){
-            console.log(lists);
             createEmptyList(item.text, item.guid);
+            for (let card of item.cards){
+                bam(`new-cards${which_list}`, card.text, card.guid);
+            }
+            which_list += 1;
         }
     })
 });
@@ -886,3 +933,60 @@ on edit, deleting card content deletes the card
 on drag of card, hovering above insert above held div should not expand it
 
 --*/
+function bam(destination, text, guid){
+    var new_card = document.createElement('button');
+    new_card.setAttribute('id', 'new-card' + card_number);
+    new_card.setAttribute('class', 'new-card');
+    new_card.setAttribute('draggable', 'true');
+    // new_card.setAttribute('ondragstart', 'dragStart(event)');
+    new_card.style.display = "none";
+    var new_card_namer = document.createElement('textarea');
+    new_card_namer.setAttribute('id', 'card-namer' + card_number);
+    new_card_namer.setAttribute('class', 'card-namer');
+    new_card_namer.setAttribute('placeholder', 'Enter a title for this card...');
+    new_card_namer.setAttribute('onblur', `cardBlur("${new_card.id}", "${new_card_namer.id}", "${destination}")`); //function - maybe go back and change this functionality//
+    new_card_namer.setAttribute('onkeypress', `detectKey(event, "${new_card.id}", "${new_card_namer.id}", "${destination}")`);//function
+    var list_destination = document.getElementById(destination);
+    list_destination.style.padding = "0px 8px";
+    var container_div = document.createElement('div');
+    container_div.setAttribute('class', 'card-container');
+    container_div.setAttribute('id', 'card-container' + card_number);
+    container_div.setAttribute('data-guid', guid);
+    container_div.appendChild(new_card_namer);
+    container_div.appendChild(new_card);
+    list_destination.appendChild(container_div);
+    new_card_namer.value = text;
+    card_number += 1;
+
+    addDragStartEvent(new_card)
+
+//
+    list_destination.style.padding = "0px 8px";
+    var name = text;
+    new_card_namer.style.display = "none";
+    var spanny = document.createElement('span');
+    spanny.innerHTML = name;
+    var butt = document.createElement('button');
+    butt.setAttribute('onclick', `editCard("${new_card.id}", "${new_card_namer.id}");`);
+    butt.innerHTML = '<i class="fas fa-pencil-alt"></i>';
+    // butt.style.display = "none";
+    var card = document.getElementById(new_card.id);
+    card.innerHTML = '';
+    card.style.display = "flex";
+    card.append(spanny);
+    card.append(butt);
+    card.style.justifyContent = 'space-between';
+
+    var insert = document.createElement('div');
+    insert.setAttribute('class', 'insert');
+    card.insertAdjacentElement('afterend', insert);
+
+
+    // var index = namer[namer.length - 1];
+    // var container_id = "card-container" + index;
+    // var container = document.getElementById(container_id);
+    
+    card_array.push(card);
+
+    // console.log(card_array);
+}
